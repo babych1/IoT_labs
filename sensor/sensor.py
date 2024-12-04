@@ -1,20 +1,18 @@
 import random
 import time
-import requests
+import json
+import paho.mqtt.client as mqtt
 
-GATEWAY_URL = "http://gateway:5001/sensor_data"
+client = mqtt.Client()
+client.connect("mqtt.eclipseprojects.io", 1883, 60)
 
 def simulate_sensor_data():
     while True:
         temperature = random.uniform(20, 30)
         humidity = random.uniform(30, 50)
-        payload = {"temperature": temperature, "humidity": humidity}
+        payload = json.dumps({"temperature": temperature, "humidity": humidity})  # Перетворення в JSON
         print(f"Dispatch: {payload}")
-        try:
-            response = requests.post(GATEWAY_URL, json=payload)
-            print(f"Gateway response: {response.status_code}")
-        except Exception as e:
-            print(f"Error: {e}")
+        client.publish("iot/sensor_data", payload)
         time.sleep(2)
 
 if __name__ == "__main__":
