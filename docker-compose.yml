@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  sensor:
+    build:
+      context: ./sensor
+    container_name: sensor
+    restart: always
+
+  gateway:
+    build:
+      context: ./gateway
+    container_name: gateway
+    depends_on:
+      - server
+    ports:
+      - "5001:5001"
+    restart: always
+
+  server:
+    build:
+      context: ./server
+    container_name: server
+    ports:
+      - "5000:5000"
+    restart: always
