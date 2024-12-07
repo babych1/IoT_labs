@@ -1,10 +1,10 @@
 import paho.mqtt.client as mqtt
 import json
-import time
+import requests
 
 BROKER = "mqtt.eclipseprojects.io"
 INPUT_TOPIC = "iot/sensors/#"
-OUTPUT_TOPIC = "iot/aggregated_data"
+CLOUD_ENDPOINT = "http://cloud_connector:5000/data"
 
 def on_connect(client, userdata, flags, rc):
     print("Gateway connected to MQTT broker.")
@@ -12,14 +12,12 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     print(f"Message received from sensor: {msg.payload.decode()}")
-    data = json.loads(msg.payload.decode())
-    aggregated_data = {
-        "sensor_id": data["sensor_id"],
-        "temperature": data["temperature"],
-        "humidity": data["humidity"],
-        "timestamp": time.time()
-    }
-    client.publish(OUTPUT_TOPIC, json.dumps(aggregated_data))
+    try:
+        data = json.loads(msg.payload.decode())
+        response = requests.post(CLOUD_ENDPOINT, json=data)
+        print(f"Data sent to cloud, response: {response.status_code}")
+    except Exception as e:
+        print(f"Failed to send data: {e}")
 
 client = mqtt.Client()
 client.on_connect = on_connect

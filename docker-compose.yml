@@ -2,25 +2,27 @@ version: "3.8"
 
 services:
   sensor:
-    build:
-      context: ./sensor
+    build: ./sensor
     container_name: sensor
     restart: always
 
   gateway:
-    build:
-      context: ./gateway
+    build: ./gateway
     container_name: gateway
     depends_on:
       - sensor
     restart: always
 
-  server:
-    build:
-      context: ./server
-    container_name: server
+  cloud_connector:
+    build: ./cloud_connector
+    container_name: cloud_connector
+    restart: always
     ports:
       - "5000:5000"
-    restart: always
 
-  
+  visualization:
+    build: ./visualization
+    container_name: visualization
+    ports:
+      - "5001:80"
+    restart: always
