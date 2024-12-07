@@ -7,12 +7,20 @@ services:
     container_name: sensor
     restart: always
 
-  receiver:
+  gateway:
     build:
-      context: ./receiver
-    container_name: receiver
+      context: ./gateway
+    container_name: gateway
     depends_on:
       - sensor
+    restart: always
+
+  server:
+    build:
+      context: ./server
+    container_name: server
+    ports:
+      - "5000:5000"
     restart: always
 
   
