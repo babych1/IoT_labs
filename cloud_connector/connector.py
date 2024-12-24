@@ -9,10 +9,9 @@ app.debug = True
 
 conn = sqlite3.connect('cloud_data.db', check_same_thread=False)
 c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS sensor_data (
-    sensor_id TEXT,
-    temperature REAL,
-    humidity REAL,
+c.execute('''CREATE TABLE IF NOT EXISTS meter_data (
+    meter_id TEXT,
+    consumption REAL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 )''')
 conn.commit()
@@ -20,34 +19,40 @@ conn.commit()
 @app.route('/data', methods=['POST'])
 def receive_data():
     data = request.json
-    c.execute("INSERT INTO sensor_data (sensor_id, temperature, humidity) VALUES (?, ?, ?)", 
-              (data['sensor_id'], data['temperature'], data['humidity']))
+    c.execute("INSERT INTO meter_data (meter_id, consumption) VALUES (?, ?)", 
+              (data['meter_id'], data['consumption']))
     conn.commit()
     return jsonify({"status": "success"}), 200
 
 @app.route('/data', methods=['GET'])
 def get_data():
+    meter_id = request.args.get('meter_id', None)
     time_range = request.args.get('range', 'all') 
+    
     conn = sqlite3.connect('cloud_data.db') 
     c = conn.cursor()
+    
+    if meter_id:
+        query = "SELECT timestamp, consumption FROM meter_data WHERE meter_id = ?"
+        params = [meter_id]
+    else:
+        query = "SELECT timestamp, consumption FROM meter_data"
+        params = []
 
-   
     if time_range == '1h':
         time_limit = str(datetime.now() - timedelta(hours=1))
-        query = "SELECT timestamp, temperature, humidity FROM sensor_data WHERE timestamp >= ?"
-        c.execute(query, (time_limit,))
+        query += " AND timestamp >= ?"
+        params.append(time_limit)
     elif time_range == '24h':
         time_limit = str(datetime.now() - timedelta(days=1))
-        query = "SELECT timestamp, temperature, humidity FROM sensor_data WHERE timestamp >= ?"
-        c.execute(query, (time_limit,))
+        query += " AND timestamp >= ?"
+        params.append(time_limit)
     elif time_range == '7d':
         time_limit = str(datetime.now() - timedelta(days=7))
-        query = "SELECT timestamp, temperature, humidity FROM sensor_data WHERE timestamp >= ?"
-        c.execute(query, (time_limit,))
-    else:
-        query = "SELECT timestamp, temperature, humidity FROM sensor_data"
-        c.execute(query)
+        query += " AND timestamp >= ?"
+        params.append(time_limit)
 
+    c.execute(query, params)
     rows = c.fetchall()
     conn.close()
     return jsonify(rows)

@@ -3,67 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IoT Data Visualization</title>
+    <title>System for monitoring indicators of electricity meters
+    </title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        #consumptionChart {
+            width: 10px;   
+            height: 400px;  
+        }
+    </style>
 </head>
 <body>
-    <h1>IoT Data Visualization</h1>
+    <h1>System for monitoring indicators of electricity meters
+    </h1>
 
- 
     <div>
-        <label for="timeRange">Select Time Range:</label>
-        <select id="timeRange">
-            <option value="all">All Data</option>
-            <option value="1h">Last 1 Hour</option>
-            <option value="24h">Last 24 Hours</option>
-            <option value="7d">Last 7 Days</option>
+        <label for="meterSelect">Select Meter:</label>
+        <select id="meterSelect">
+            <option value="meter1">Meter 1</option>
+            <option value="meter2">Meter 2</option>
+            <option value="meter3">Meter 3</option>
+            <option value="meter4">Meter 4</option>
+            <option value="meter5">Meter 5</option>
+            <option value="meter6">Meter 6</option>
+            <option value="meter7">Meter 7</option>
+            <option value="meter8">Meter 8</option>
+            <option value="meter9">Meter 9</option>
+            <option value="meter10">Meter 10</option>
         </select>
-        
     </div>
 
     <div>
-        <h2>Temperature</h2>
-        <canvas id="temperatureChart"></canvas>
+        <label for="timeRange">Select time range:</label>
+        <select id="timeRange">
+            <option value="all">All data</option>
+            <option value="1h">Last 1 hour</option>
+            <option value="24h">Last 24 hours</option>
+            <option value="7d">Last 7 days</option>
+        </select>
     </div>
+
     <div>
-        <h2>Humidity</h2>
-        <canvas id="humidityChart"></canvas>
+       
+        <canvas id="consumptionChart"></canvas>
     </div>
 
     <script>
-      
+        const meterSelect = document.getElementById('meterSelect');
         const timeRangeSelector = document.getElementById('timeRange');
-        const temperatureChartCtx = document.getElementById('temperatureChart').getContext('2d');
-        const humidityChartCtx = document.getElementById('humidityChart').getContext('2d');
+        const consumptionChartCtx = document.getElementById('consumptionChart').getContext('2d');
 
-        let temperatureChart = new Chart(temperatureChartCtx, {
+        let consumptionChart = new Chart(consumptionChartCtx, {
             type: 'line',
             data: {
                 labels: [],
                 datasets: [{
-                    label: 'Temperature (°C)',
-                    data: [],
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderWidth: 1,
-                    fill: true,
-                }],
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    x: { title: { display: true, text: 'Time' } },
-                    y: { title: { display: true, text: 'Temperature (°C)' } },
-                },
-            },
-        });
-
-        let humidityChart = new Chart(humidityChartCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Humidity (%)',
+                    label: 'Indicators of electricity meters (kWh)',
                     data: [],
                     borderColor: 'rgba(54, 162, 235, 1)',
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
@@ -73,16 +68,17 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     x: { title: { display: true, text: 'Time' } },
-                    y: { title: { display: true, text: 'Humidity (%)' } },
+                    y: { title: { display: true, text: 'Electricity meters (kWh)' } },
                 },
             },
         });
 
-        async function fetchData(range) {
+        async function fetchData(meterId, range) {
             try {
-                const response = await fetch(`http://127.0.0.1:5000/data?range=${range}`);
+                const response = await fetch(`http://127.0.0.1:5000/data?meter_id=${meterId}&range=${range}`);
                 if (response.ok) {
                     const data = await response.json();
                     return data;
@@ -96,31 +92,30 @@
             }
         }
 
-        async function updateCharts(range) {
-
+        async function updateChart(meterId, range) {
+            const data = await fetchData(meterId, range);
             
-            const data = await fetchData(range);
-            
-            const labels = data.map(item => item[0]); 
-            const temperatures = data.map(item => item[1]); 
-            const humidities = data.map(item => item[2]); 
+            const labels = data.map(item => item[0]);
+            const consumptions = data.map(item => item[1]);
 
-            
-            temperatureChart.data.labels = labels;
-            temperatureChart.data.datasets[0].data = temperatures;
-            temperatureChart.update();
-
-            humidityChart.data.labels = labels;
-            humidityChart.data.datasets[0].data = humidities;
-            humidityChart.update();
+            consumptionChart.data.labels = labels;
+            consumptionChart.data.datasets[0].data = consumptions;
+            consumptionChart.update();
         }
 
-        timeRangeSelector.addEventListener('change', () => {
+        meterSelect.addEventListener('change', () => {
+            const selectedMeter = meterSelect.value;
             const selectedRange = timeRangeSelector.value;
-            updateCharts(selectedRange);
+            updateChart(selectedMeter, selectedRange);
         });
 
-        updateCharts('all');
+        timeRangeSelector.addEventListener('change', () => {
+            const selectedMeter = meterSelect.value;
+            const selectedRange = timeRangeSelector.value;
+            updateChart(selectedMeter, selectedRange);
+        });
+
+        updateChart('meter1', 'all');
     </script>
 </body>
 </html>

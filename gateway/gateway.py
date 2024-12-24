@@ -3,7 +3,7 @@ import json
 import requests
 
 BROKER = "mqtt.eclipseprojects.io"
-INPUT_TOPIC = "iot/sensors/#"
+INPUT_TOPIC = "iot/meters/#" 
 CLOUD_ENDPOINT = "http://cloud_connector:5000/data"
 
 def on_connect(client, userdata, flags, rc):
@@ -11,7 +11,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe(INPUT_TOPIC)
 
 def on_message(client, userdata, msg):
-    print(f"Message received from sensor: {msg.payload.decode()}")
+    print(f"Message received from meter: {msg.payload.decode()}")
     try:
         data = json.loads(msg.payload.decode())
         response = requests.post(CLOUD_ENDPOINT, json=data)
